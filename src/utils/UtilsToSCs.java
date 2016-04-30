@@ -4,7 +4,7 @@ import java.util.EnumMap;
 
 public class UtilsToSCs {
 	public static enum enumConnectors {
-		binarLeft, binarRight, unarLeft, unarRight
+		binarLeft, binarRight, unarLeft, unarRight, none
 	}
 
 	public static enum enumLineEnd {
@@ -17,6 +17,7 @@ public class UtilsToSCs {
 		mapConnectors.put(enumConnectors.binarRight, "<=");
 		mapConnectors.put(enumConnectors.unarRight, "->");
 		mapConnectors.put(enumConnectors.unarLeft, "<-");
+		mapConnectors.put(enumConnectors.none, "");
 	}
 	static {
 		mapLineEnd.put(enumLineEnd.end, ";;");

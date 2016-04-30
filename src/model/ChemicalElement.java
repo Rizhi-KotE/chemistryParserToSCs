@@ -65,9 +65,11 @@ public class ChemicalElement {
 		StringBuilder out = new StringBuilder();
 		out.append(sys_idtf);
 		out.append("\n	");
-		out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, "nrel_main_idtf", "["+fields.get("name")+"]", enumLineEnd.to_be_continued));
+		out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, "nrel_main_idtf", "[" + fields.get("name") + "]",
+				enumLineEnd.to_be_continued));
 		out.append("\n	");
-		out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, "nrel_idtf", "["+fields.get("symbol")+"]", enumLineEnd.end));
+		out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, "nrel_idtf", "[" + fields.get("symbol") + "]",
+				enumLineEnd.end));
 		return out.toString();
 	}
 
@@ -80,13 +82,23 @@ public class ChemicalElement {
 			switch (SCsType) {
 			case "nrel":
 				out.append(nrelToSCs(field));
+				out.append("\n");
 				break;
-			case "rrel":
-				out.append(rrelToSCs(field));
-				break;
+			default: break;
 			}
 		}
+		out.append(periodicTable());
 		out.append(";");
+		return out.toString();
+	}
+
+	private String periodicTable() {
+		StringBuilder out = new StringBuilder();
+		out.append("\n	");
+		String row = "rrel_periodic_row" + fields.get("row").toString();
+		String column = "rrel_periodic_column" + fields.get("row").toString();
+		out.append(UtilsToSCs.SCsFive("", enumConnectors.unarLeft, row, "", enumLineEnd.open));
+		out.append(UtilsToSCs.SCsFive("", enumConnectors.unarLeft, column, "periodic_table", enumLineEnd.to_be_continued));
 		return out.toString();
 	}
 
