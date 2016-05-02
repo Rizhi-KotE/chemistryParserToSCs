@@ -1,6 +1,7 @@
 package utils;
 
 import java.util.EnumMap;
+import java.util.List;
 
 public class UtilsToSCs {
 	public static enum enumConnectors {
@@ -79,12 +80,11 @@ public class UtilsToSCs {
 	public static String ArrayOfIntegerToSCs(Object in, enumConnectors type, String second, String third,
 			enumLineEnd end) {
 		StringBuilder out = new StringBuilder();
-		out.append("(*/n	");
-		for (Integer number : (int[]) in) {
-			out.append(SCsFive("", type, second, third, end));
+		for (Integer number : (List<Integer>) in) {
+			out.append(SCsFive("", type, second, third, enumLineEnd.open));
+			out.append(value(number.toString(), enumLineEnd.to_be_continued));
+			out.append("\n");
 		}
-		out.append("*)");
-		out.append(mapLineEnd.get(end));
-		return value(in.toString(), end);
+		return out.toString();
 	}
 }

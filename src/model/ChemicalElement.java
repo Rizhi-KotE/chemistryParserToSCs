@@ -96,9 +96,9 @@ public class ChemicalElement {
 		StringBuilder out = new StringBuilder();
 		out.append("\n	");
 		String row = "rrel_periodic_row" + fields.get("row").toString();
-		String column = "rrel_periodic_column" + fields.get("row").toString();
+		String column = "rrel_periodic_column" + fields.get("column").toString();
 		out.append(UtilsToSCs.SCsFive("", enumConnectors.unarLeft, row, "", enumLineEnd.open));
-		out.append(UtilsToSCs.SCsFive("", enumConnectors.unarLeft, column, "periodic_table", enumLineEnd.to_be_continued));
+		out.append(UtilsToSCs.SCsFive("", enumConnectors.none, column, "periodic_table", enumLineEnd.to_be_continued));
 		return out.toString();
 	}
 
@@ -143,12 +143,7 @@ public class ChemicalElement {
 			out.append(UtilsToSCs.value(fields.get(field).toString(), enumLineEnd.to_be_continued));
 			break;
 		case "ArrayOfInteger":
-			List<Integer> values = (List<Integer>) fields.get(field);
-			for (Integer value : values) {
-				out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, fieldType + "_" + field, "...",
-						enumLineEnd.open));
-				out.append(UtilsToSCs.value(fields.get(field).toString(), enumLineEnd.to_be_continued));
-			}
+				out.append(UtilsToSCs.ArrayOfIntegerToSCs(fields.get(field), enumConnectors.binarRight, fieldType+"_"+field, "...",enumLineEnd.to_be_continued));
 			break;
 		}
 		return out.toString();
