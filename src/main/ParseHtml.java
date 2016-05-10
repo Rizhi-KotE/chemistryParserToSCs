@@ -2,13 +2,13 @@ package main;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,6 +18,8 @@ import org.jsoup.select.Elements;
 import model.ChemicalElement;
 
 public class ParseHtml {
+	public static Map<Integer, ChemicalElement> elementsNumber;
+	
 	public static void main(String[] args) throws IOException {
 		StringBuilder htmlText = new StringBuilder();
 		Scanner scanner = new Scanner(new FileInputStream("PeriodicTableHTML.txt"));
@@ -37,11 +39,15 @@ public class ParseHtml {
 				}
 				chems.add(ChemicalElement.parseFromHtmlElement(chem));
 			}
+			
+			elementsNumber = chems.stream().collect(Collectors.toMap(t->(Integer)((ChemicalElement)t).getFieldValue("atomic_number"),t->t));
 		}
+		ParseExtendedTable.main(args);
+		
 		for(ChemicalElement chem: chems){
 			String mainChem = chem.chemToSCsMain();
 			String engChem = chem.chemToSCsEng();
-			String ruChem = chem.chemToSCsEng();
+			String ruChem = chem.chemToSCsRu();
 			String sys_idtf = chem.getSys_idtf();
 			new File("kb/kb_main/"+sys_idtf).mkdirs();
 			new File("kb/kb_eng/"+sys_idtf).mkdirs();

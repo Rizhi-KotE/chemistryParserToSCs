@@ -6,10 +6,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 import org.jsoup.nodes.Element;
 
@@ -22,6 +25,7 @@ public class ChemicalElement {
 	private static List<String> fieldsNames = new ArrayList<>();
 	private static Properties fieldsType = new Properties();
 	private static Properties fieldsSCsType = new Properties();
+	private static Properties fieldsLanguage = new Properties();
 	static {
 		try {
 			Scanner scanner = new Scanner(new FileInputStream("fieldsName.properties"));
@@ -30,6 +34,7 @@ public class ChemicalElement {
 			}
 			fieldsType.load(new FileInputStream("fieldsType.properties"));
 			fieldsSCsType.load(new FileInputStream("fieldsSCsType.properties"));
+			fieldsLanguage.load(new FileInputStream("fieldsLanguage.properties"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -66,10 +71,13 @@ public class ChemicalElement {
 		out.append(sys_idtf);
 		out.append("\n	");
 		out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, "nrel_main_idtf", "[" + fields.get("name") + "]",
-				enumLineEnd.to_be_continued));
+				enumLineEnd.open));
+		out.append("(*<- lang_en;;*);");
 		out.append("\n	");
 		out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, "nrel_idtf", "[" + fields.get("symbol") + "]",
-				enumLineEnd.end));
+				enumLineEnd.open));
+		out.append("(*<- lang_en;;*)");
+		out.append(";;");
 		return out.toString();
 	}
 
@@ -77,19 +85,41 @@ public class ChemicalElement {
 		StringBuilder out = new StringBuilder();
 		out.append(sys_idtf);
 		out.append("\n	");
-		for (String field : fieldsNames) {
-			String SCsType = fieldsSCsType.getProperty(field);
-			switch (SCsType) {
+		List<String> nrelFields = new LinkedList<>();
+		List<String> rrelFields = new LinkedList<>();
+
+		fields.keySet().stream().filter(field -> fieldsLanguage.getProperty(field).equals("main")).forEach(field -> {
+			switch (fieldsSCsType.getProperty(field)) {
 			case "nrel":
-				out.append(nrelToSCs(field));
-				out.append("\n");
+				nrelFields.add(field);
 				break;
-			default: break;
+			case "rrel":
+				rrelFields.add(field);
+				break;
 			}
+		});
+		for (String nrel : nrelFields) {
+			out.append(nrelToSCs(nrel));
 		}
-		out.append(periodicTable());
-		out.append(";");
+		Iterator<String> rrelIt = rrelFields.iterator();
+		if (rrelIt.hasNext()) {
+			out.append("\n");
+			String field = rrelIt.next();
+			out.append(UtilsToSCs.SCsFive("", enumConnectors.unarLeft, "rrel_periodic_" + field +"_" + fields.get(field), "",
+					enumLineEnd.open));
+			while (rrelIt.hasNext()) {
+				field = rrelIt.next();
+				out.append(UtilsToSCs.SCsFive("", enumConnectors.none, "rrel_periodic_" + field +"_" + fields.get(field), "",
+						enumLineEnd.open));
+			}
+			out.append("periodic_table;");
+			out.append(";");
+		}
 		return out.toString();
+	}
+
+	public Object getFieldValue(String s) {
+		return fields.get(s);
 	}
 
 	private String periodicTable() {
@@ -128,30 +158,65 @@ public class ChemicalElement {
 		return out.toString();
 	}
 
+	private String parseFieldValue(String field) {
+		StringBuilder out = new StringBuilder();
+		String fieldType = fieldsType.getProperty(field);
+		switch (fieldType) {
+		case "Double":
+			out.append(
+					UtilsToSCs.SCsFive("", enumConnectors.unarRight, fieldType + "_" + field, "...", enumLineEnd.open));
+			out.append(UtilsToSCs.value(fields.get(field).toString(), enumLineEnd.to_be_continued));
+			break;
+		case "Integer":
+			out.append(
+					UtilsToSCs.SCsFive("", enumConnectors.unarRight, fieldType + "_" + field, "...", enumLineEnd.open));
+			out.append(UtilsToSCs.value(fields.get(field).toString(), enumLineEnd.to_be_continued));
+			break;
+		case "ArrayOfInteger":
+			int[] values = (int[]) fields.get(field);
+			for (int value : values) {
+				out.append(UtilsToSCs.SCsFive("", enumConnectors.unarRight, fieldType + "_" + field, "...",
+						enumLineEnd.open));
+				out.append(UtilsToSCs.value(fields.get(field).toString(), enumLineEnd.to_be_continued));
+			}
+			break;
+		}
+		return out.toString();
+	}
+	
 	private String nrelToSCs(String field) {
 		StringBuilder out = new StringBuilder();
 		String fieldType = fieldsType.getProperty(field);
 		switch (fieldType) {
 		case "Double":
-			out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, fieldType + "_" + field, "...",
+			out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, fieldsSCsType.getProperty(field) + "_" + field, "...",
 					enumLineEnd.open));
 			out.append(UtilsToSCs.value(fields.get(field).toString(), enumLineEnd.to_be_continued));
+			out.append("\n");
 			break;
 		case "Integer":
-			out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, fieldType + "_" + field, "...",
+			out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, fieldsSCsType.getProperty(field) + "_" + field, "...",
 					enumLineEnd.open));
 			out.append(UtilsToSCs.value(fields.get(field).toString(), enumLineEnd.to_be_continued));
+			out.append("\n");
 			break;
 		case "ArrayOfInteger":
-				out.append(UtilsToSCs.ArrayOfIntegerToSCs(fields.get(field), enumConnectors.binarRight, fieldType+"_"+field, "...",enumLineEnd.to_be_continued));
+			out.append(UtilsToSCs.ArrayOfIntegerToSCs(fields.get(field), enumConnectors.binarRight,
+					fieldsSCsType.getProperty(field) + "_" + field, "...", enumLineEnd.to_be_continued));
 			break;
 		}
 		return out.toString();
 	}
 
 	public String chemToSCsRu() {
-		StringBuilder builder = new StringBuilder();
-		return builder.toString();
+		StringBuilder out = new StringBuilder();
+		out.append(sys_idtf);
+		out.append("\n	");
+		out.append(UtilsToSCs.SCsFive("", enumConnectors.binarRight, "nrel_main_idtf", "[элемент " + fields.get("rus_name") + "]",
+				enumLineEnd.open));
+		out.append("(*<- lang_ru;;*)");
+		out.append(";;");
+		return out.toString();
 	}
 
 	public void setValue(String name, String value) {
